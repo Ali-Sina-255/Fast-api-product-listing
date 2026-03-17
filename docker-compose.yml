@@ -2,7 +2,9 @@ version: "3.9"
 
 services:
   db:
-    image: docker.io/postgres:16-bullseye
+    build:
+      context: ./docker/local/postgres
+      dockerfile: Dockerfile
     container_name: postgres_db
     restart: always
     environment:
@@ -13,6 +15,23 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+  web:
+    build:
+      context: ./docker/local/fastapi
+      dockerfile: Dockerfile
+    container_name: fastapi_app
+    command: uvicorn apps.server:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: test_db
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
 
 volumes:
   postgres_data:
